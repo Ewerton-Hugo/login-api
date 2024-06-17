@@ -1,0 +1,97 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id            String    @id @default(uuid()) 
+  usuarioNome   String
+  usuarioEmail  String @unique
+  usuarioSenha  String
+  usuarioCpf    String? @unique
+  cargo         String?
+  chavesRecuperaSenha        ChavesRecuperaSenha[]@relation("UsuarioToChavesRecuperaSenha")
+  chave2FA                    Autenticacao2FAEmail[]@relation("UsuarioToAutenticacao2FAEmail")
+  agendamento                 Agendamento[]@relation("UsuarioToAgendamento")
+
+  secret2FA     String
+  permicaoEmail2FA Boolean?  
+  permicaoAppExterno2FA Boolean?  
+
+
+}
+
+model ChavesRecuperaSenha {
+  id       String   @id @default(uuid()) 
+  chave    String   @unique
+  status   String
+  clienteId String?
+  usuarioId String?
+  usuario  Usuario? @relation("UsuarioToChavesRecuperaSenha",fields: [usuarioId], references: [id])
+  cliente  Cliente? @relation("ClienteToChavesRecuperaSenha",fields: [clienteId], references: [id])
+}
+model Autenticacao2FAEmail {
+  id       String   @id @default(uuid()) 
+  chave    String   @unique
+  status   String
+  usuarioId String?
+  clienteId String?
+  usuario  Usuario? @relation("UsuarioToAutenticacao2FAEmail",fields: [usuarioId], references: [id])
+  cliente  Cliente? @relation("ClienteToAutenticacao2FAEmail",fields: [clienteId], references: [id])
+
+}
+model Cliente {
+  id                String            @id @default(uuid())
+  clienteNome       String
+  clienteEndereco   String
+  clienteEmail      String            @unique
+  clienteSenha      String
+  clienteCpf        String            @unique
+  secret2FA     String
+  permicaoEmail2FA Boolean?  
+  permicaoAppExterno2FA Boolean?  
+  contasReceber             ContasReceber[]   @relation("ClienteToContasReceber")
+  agendamento             Agendamento[]     @relation("ClienteToAgendamento")
+  chavesRecuperaSenha     ChavesRecuperaSenha[]@relation("ClienteToChavesRecuperaSenha")
+  chave2FA                Autenticacao2FAEmail[]@relation("ClienteToAutenticacao2FAEmail")
+}
+
+model ContasPagar {
+  id            String    @id @default(uuid()) 
+  valor      Float
+  vencimento DateTime
+  descricao  String
+  // usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId  Int
+}
+
+model ContasReceber {
+  id                String            @id @default(uuid())
+  valor             Float
+  dataRecebimento   DateTime
+  clienteId         String?
+  usuarioId         Int
+  cliente           Cliente?          @relation("ClienteToContasReceber", fields: [clienteId], references: [id])
+
+}
+
+model Agendamento {
+  id              String    @id @default(uuid())
+  dataAgendamento DateTime
+  hora            DateTime
+  descricao       String
+  // usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId       String?
+  clienteId       String?
+  cliente         Cliente?          @relation("ClienteToAgendamento", fields: [clienteId], references: [id])
+  usuario         Usuario?          @relation("UsuarioToAgendamento", fields: [usuarioId], references: [id])
+
+}
+
